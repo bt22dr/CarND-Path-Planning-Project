@@ -51,8 +51,11 @@ int main() {
     map_waypoints_dy.push_back(d_y);
   }
 
+  int lane = 1;
+  double ref_vel = 0.0; // mph
+
   h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
-               &map_waypoints_dx,&map_waypoints_dy]
+               &map_waypoints_dx,&map_waypoints_dy,&lane,&ref_vel]
               (uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -98,9 +101,6 @@ int main() {
            * TODO: define a path made up of (x,y) points that the car will visit
            *   sequentially every .02 seconds
            */
-          int lane = 1;
-          double ref_vel = 49.5; // mph
-
           int prev_size = previous_path_x.size();
 
           if(prev_size > 0) {
@@ -128,10 +128,16 @@ int main() {
                 // TODO: 여기에서 액션을 취해야 한다. 
                 //   - 속도를 줄이거나
                 //   - lane을 바꾸라고 flag를 표시하거나 등등 
-                ref_vel = 29.5;
-                // too_close = true;
+                // ref_vel = 29.5;
+                too_close = true;
               }
             }
+          }
+
+          if(too_close) {
+            ref_vel -= .224;
+          } else if(ref_vel < 49.5) {
+            ref_vel += .224;
           }
 
           vector<double> ptsx;
@@ -140,7 +146,6 @@ int main() {
           double ref_x = car_x;
           double ref_y = car_y;
           double ref_yaw = deg2rad(car_yaw);
-
 
           if(prev_size < 2) { // prev size가 거의 비었을 때 이전 위치(추정값)이랑 현재 위치를 ptsx, ptsy에 넣어준다. 
             double prev_car_x = car_x - cos(car_yaw);
