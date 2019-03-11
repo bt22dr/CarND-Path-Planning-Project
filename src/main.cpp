@@ -99,9 +99,40 @@ int main() {
            *   sequentially every .02 seconds
            */
           int lane = 1;
-          double ref_vel = 49.5; 
+          double ref_vel = 49.5; // mph
 
           int prev_size = previous_path_x.size();
+
+          if(prev_size > 0) {
+            car_s = end_path_s;
+          }
+
+          bool too_close = false;
+
+          // sensor_fusion 정보를 이용해서 주변 차들의 정보를 수집
+          // i는 i번째 차를 의미한다. 
+          for(int i = 0; i < sensor_fusion.size(); i++) {
+            float d = sensor_fusion[i][6];
+
+            // i번째 차의 lane이 내 차와 같으면 
+            if(d < (2+4*lane+2) && d > (2+4*lane-2)) {
+              double vx = sensor_fusion[i][3];
+              double vy = sensor_fusion[i][4];
+              double check_speed = sqrt(vx*vx + vy*vy); // 그 차의 속도를 구하고
+              double check_car_s = sensor_fusion[i][5]; // 그 차의 위치도 구한다.
+
+              check_car_s += ((double)prev_size*0.02*check_speed); // 그 차가 미래에 어디에 있을지 구하고 
+
+              // 만약 그 차가 내 차보다 앞에 있고, 거리 차이가 30m 보다 작다면
+              if((check_car_s > car_s) && ((check_car_s-car_s) < 30)) {
+                // TODO: 여기에서 액션을 취해야 한다. 
+                //   - 속도를 줄이거나
+                //   - lane을 바꾸라고 flag를 표시하거나 등등 
+                ref_vel = 29.5;
+                // too_close = true;
+              }
+            }
+          }
 
           vector<double> ptsx;
           vector<double> ptsy;
@@ -109,6 +140,7 @@ int main() {
           double ref_x = car_x;
           double ref_y = car_y;
           double ref_yaw = deg2rad(car_yaw);
+
 
           if(prev_size < 2) { // prev size가 거의 비었을 때 이전 위치(추정값)이랑 현재 위치를 ptsx, ptsy에 넣어준다. 
             double prev_car_x = car_x - cos(car_yaw);
@@ -185,7 +217,7 @@ int main() {
             // 최종적으로 결과 벡터에 집어넣기
             next_x_vals.push_back(x_point);
             next_y_vals.push_back(y_point);
-          }
+          }     
 
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
