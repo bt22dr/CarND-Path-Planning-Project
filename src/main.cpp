@@ -125,19 +125,9 @@ int main() {
 
               // 만약 그 차가 내 차보다 앞에 있고, 거리 차이가 30m 보다 작다면
               if((check_car_s > car_s) && ((check_car_s-car_s) < 30)) {
-                // TODO: 여기에서 액션을 취해야 한다. 
-                //   - 속도를 줄이거나
-                //   - lane을 바꾸라고 flag를 표시하거나 등등 
-                // ref_vel = 29.5;
-                too_close = true;
+                too_close = true; // 속도를 줄이거나 lane을 바꾸라고 flag를 표시
               }
             }
-          }
-
-          if(too_close) {
-            ref_vel -= .224;
-          } else if(ref_vel < 49.5) {
-            ref_vel += .224;
           }
 
           vector<double> ptsx;
@@ -206,6 +196,12 @@ int main() {
 
           // 50개 채우기 위해 추가해야하는 점 개수만큼 
           for(int i = 1; i <= 50-previous_path_x.size(); i++) {
+            if(too_close) {
+              ref_vel -= .224;
+            } else if(ref_vel < 49.5) {
+              ref_vel += .224;
+            }
+
             double N = (target_dist/(.02*ref_vel/2.24)); // 2.24는 meter랑 mph 변환하는 상수 
             double x_point = x_add_on+(target_x)/N;
             double y_point = s(x_point);
